@@ -24,8 +24,13 @@ var playingDisc = {
         
         if (posY === null)
             posY = this.y;
-        if (posX <= (this.x + this.radius) && posX >= this.x
-           && posY <= (this.y + this.radius) && posY >= this.y) {
+        
+        console.log("checking disccollision");
+        console.log("Object x: " + posX + " y: " + posY);
+        console.log("Disc x: " + this.x + " y: " + this.y);
+        
+        if (posX <= (this.x + this.radius) && posX >= (this.x - this.radius)
+           && posY <= (this.y + this.radius) && posY >= (this.y - this.radius)) {
             return true;   
         }
         return false;
@@ -104,25 +109,25 @@ function loop()
 
 function mouseMoveListener(e)
 {
-    var mouseNewTimeStamp = new Date().getTime();
-    var mouseNewPosX = e.pageX - document.getElementById('gameStage').offsetLeft;
-    var mouseNewPosY = e.pageY - document.getElementById('gameStage').offsetTop;
-    document.getElementById('x').innerHTML = mouseNewPosX;
-    document.getElementById('y').innerHTML = mouseNewPosY;
+    var mouseTimeStamp = new Date().getTime();
+    var mousePosX = e.pageX - document.getElementById('gameStage').offsetLeft;
+    var mousePosY = e.pageY - document.getElementById('gameStage').offsetTop;
+    document.getElementById('x').innerHTML = mousePosX;
+    document.getElementById('y').innerHTML = mousePosY;
     
     if (isDiscClicked) {
         if (mouseOldPosX != null && mouseOldPosY != null) {
-            var diffTimeStamp = mouseNewTimeStamp - mouseOldTimeStamp;
-            var diffPosX = mouseNewPosX - mouseOldPosX;
-            var diffPosY = mouseNewPosY - mouseOldPosY;
+            var diffTimeStamp = mouseTimeStamp - mouseOldTimeStamp;
+            var diffPosX = mousePosX - mouseOldPosX;
+            var diffPosY = mousePosY - mouseOldPosY;
 
             mouseAccelerationX = Math.round((diffPosX / diffTimeStamp) * 1000 / frameRate);
             mouseAccelerationY = Math.round((diffPosY / diffTimeStamp) * 1000 / frameRate);
         }
         
-        mouseOldTimeStamp = mouseNewTimeStamp;
-        mouseOldPosX = playingDisc.x = mouseNewPosX;
-        mouseOldPosY = playingDisc.y = mouseNewPosY;
+        mouseOldTimeStamp = mouseTimeStamp;
+        mouseOldPosX = playingDisc.x = mousePosX;
+        mouseOldPosY = playingDisc.y = mousePosY;
     }
 };
 
@@ -147,7 +152,8 @@ function mouseDownListener(event)
 
 function checkDiscClick(event)
 {
-    if (playingDisc.isCollision(event.pageX, event.pageY)) {
+    if (playingDisc.isCollision(event.pageX - document.getElementById('gameStage').offsetLeft, event.pageY - document.getElementById('gameStage').offsetTop)) {
+        console.log("disc clicked");
         isDiscClicked = true;    
     } else {
         isDiscClicked = false;   
@@ -174,6 +180,7 @@ function resetAccData()
 function mouseUpListener(event)
 {
     if (isDiscClicked) {
+        console.log("mouseacc x: " + mouseAccelerationX + " y: " + mouseAccelerationY);
         playingDisc.accX = playingDisc.accX + mouseAccelerationX;
         playingDisc.accY = playingDisc.accY + mouseAccelerationY;
         isDiscClicked = false;
