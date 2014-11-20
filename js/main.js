@@ -11,14 +11,101 @@ var isPlaying = false;
 
 var isDiscClicked = false;
 
-var playingDisc = {
-    x:20,
-    y:20,
-    accX:0,
-    accY:gravity,
-    radius:12,
+var imageRepo = new function() {
+    this.background = new Image();
     
-    isCollision : function(posX, posY) {
+    this.background.src = "img/bg.png";
+}
+var background;
+
+function Drawable() {    
+    this.init = function(x,y,speedX,speedY) {
+        this.x = x;
+        this.y = y;
+        this.speedX = speedX;
+        this.speedY = speedY;
+    }
+    
+    this.changePosition = function(x,y) {
+        if (x != null)
+            this.x = x;
+        if (y != null)
+            this.y = y;
+    }
+    
+    this.changeSpeed = function(speedX, speedY) {
+        if (speedX != null)
+            this.speedX = speedX;
+        if (speedY != null)
+            this.speedY = speedY;
+    }
+    
+    this.draw = function() {
+    };
+    
+    this.isCollision = function() {
+    };
+}
+
+function Background() {    
+    this.draw = function() {
+        this.x -= this.speedX;
+        context.drawImage(imageRepo.background, this.x, this.y);
+        context.drawImage(imageRepo.background, this.x + canvasWidth, this.y)
+        
+        if (this.x + canvasWidth <= 0) {
+            this.x = 0   
+        }
+    }
+}
+Background.prototype = new Drawable();
+
+function PlayingDisc() {
+    this.init = function(x,y,radius,color,speedX,speedY) {
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.color = color;
+        this.speedX = speedX;
+        this.speedY = speedY;
+    }
+    
+    this.draw = function() {
+        if (isDiscClicked) {
+            background.changeSpeed(0,0);
+            playingDisc.changeSpeed(0,0);
+        } else {
+            if (this.isLanded()) {
+                this.y = canvasHeight - this.radius;
+            
+                if (this.x > (canvasWidth / 2)) {
+                    this.changeSpeed(-2,0);
+                    background.changeSpeed(2,0);
+                } else {
+                    this.changeSpeed(0,0);
+                    background.changeSpeed(0,0);
+                }            
+            } else {
+                if (this.x + this.radius >= canvasWidth) {
+                    this.x = canvasWidth - this.radius;
+                    this.changeSpeed(0 , null);
+                    background.changeSpeed(mouseAccelerationX, null);
+                }
+            }
+            
+            this.speedY = this.speedY + Math.round(gravity);
+                        
+            this.x = this.x + this.speedX;
+            this.y = this.y + this.speedY;     
+        }
+        
+        context.beginPath();
+        context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, false);
+        context.fillStyle = this.color;
+        context.fill(); 
+    }
+    
+    this.isCollision = function(posX, posY) {
         if (posX === null)
             posX = this.x;
         
@@ -26,26 +113,25 @@ var playingDisc = {
             posY = this.y;
         
         console.log("checking disccollision");
-        console.log("Object x: " + posX + " y: " + posY);
-        console.log("Disc x: " + this.x + " y: " + this.y);
+        console.log("Object1 x: " + posX + " y: " + posY);
+        console.log("Object2 x: " + this.x + " y: " + this.y);
         
         if (posX <= (this.x + this.radius) && posX >= (this.x - this.radius)
            && posY <= (this.y + this.radius) && posY >= (this.y - this.radius)) {
             return true;   
         }
         return false;
-    },
+    }
     
-    resetAcc : function() {
-        this.accX = 0;
-        this.accY = gravity;
-    },
-    
-    resetPosition : function() {
-        this.x = 20;
-        this.y = 20;
+    this.isLanded = function() {
+        if (this.y + this.radius > canvasHeight) {
+            return true;
+        } else {
+            return false;   
+        }
     }
 }
+PlayingDisc.prototype = new Drawable();
 
 var mouseOldPosX;
 var mouseOldPosY;
@@ -62,6 +148,12 @@ function init()
     canvasWidth = parseInt(canvasElement.width);
     canvasHeight = parseInt(canvasElement.height);
     
+    background = new Background();
+    background.init(0,0,0,0);
+    
+    playingDisc = new PlayingDisc();
+    playingDisc.init(20,20,12,'red',0,0);
+    
     document.addEventListener("keydown", keyDownListener, false);
     canvasElement.addEventListener("mousemove", mouseMoveListener, false);
     canvasElement.addEventListener("mousedown", mouseDownListener, false);
@@ -76,35 +168,10 @@ function loop()
     }
     context.clearRect(0,0,canvasWidth,canvasHeight);
     
-    if (!isDiscClicked) {
-        playingDisc.accY = playingDisc.accY + Math.round(gravity);
-                
-        playingDisc.x = playingDisc.x + playingDisc.accX;
-        playingDisc.y = playingDisc.y + playingDisc.accY;
-    }
+    background.draw();
+    playingDisc.draw();
     
-    if (playingDisc.y + playingDisc.radius > canvasHeight) {
-        playingDisc.y = canvasHeight - playingDisc.radius;
-        playingDisc.resetAcc();
-    }
-    
-    if (playingDisc.x - playingDisc.radius < 0) {
-        playingDisc.x = 0 + playingDisc.radius;
-        playingDisc.accX = 0;
-    }
-    
-    if (playingDisc.x + playingDisc.radius > canvasWidth) {
-        playingDisc.x = canvasWidth - playingDisc.radius;
-        playingDisc.accX = 0;
-    }
-    
-    
-    context.beginPath();
-    context.arc(playingDisc.x, playingDisc.y, playingDisc.radius, 0, 2 * Math.PI, false);
-    context.fillStyle = 'red';
-    context.fill();  
-        
-    window.setTimeout(loop, 1000 / frameRate);
+    window.setTimeout(loop, 1000 / frameRate)
 };
 
 function mouseMoveListener(e)
@@ -112,8 +179,6 @@ function mouseMoveListener(e)
     var mouseTimeStamp = new Date().getTime();
     var mousePosX = e.pageX - document.getElementById('gameStage').offsetLeft;
     var mousePosY = e.pageY - document.getElementById('gameStage').offsetTop;
-    document.getElementById('x').innerHTML = mousePosX;
-    document.getElementById('y').innerHTML = mousePosY;
     
     if (isDiscClicked) {
         if (mouseOldPosX != null && mouseOldPosY != null) {
@@ -126,8 +191,10 @@ function mouseMoveListener(e)
         }
         
         mouseOldTimeStamp = mouseTimeStamp;
-        mouseOldPosX = playingDisc.x = mousePosX;
-        mouseOldPosY = playingDisc.y = mousePosY;
+        mouseOldPosX = mousePosX;
+        mouseOldPosY = mousePosY;
+        
+        playingDisc.changePosition(mousePosX, mousePosY);
     }
 };
 
@@ -153,7 +220,6 @@ function mouseDownListener(event)
 function checkDiscClick(event)
 {
     if (playingDisc.isCollision(event.pageX - document.getElementById('gameStage').offsetLeft, event.pageY - document.getElementById('gameStage').offsetTop)) {
-        console.log("disc clicked");
         isDiscClicked = true;    
     } else {
         isDiscClicked = false;   
@@ -163,7 +229,7 @@ function checkDiscClick(event)
 function resetGame()
 {
     resetAccData();   
-    playingDisc.resetPosition();
+    playingDisc.changePosition(20,20);
 }
 
 function resetAccData()
@@ -173,16 +239,12 @@ function resetAccData()
     mouseOldTimeStamp = null;
     mouseAccelerationX = 0;
     mouseAccelerationY = 0;
-    
-    playingDisc.resetAcc();
 }
 
 function mouseUpListener(event)
 {
     if (isDiscClicked) {
-        console.log("mouseacc x: " + mouseAccelerationX + " y: " + mouseAccelerationY);
-        playingDisc.accX = playingDisc.accX + mouseAccelerationX;
-        playingDisc.accY = playingDisc.accY + mouseAccelerationY;
+        playingDisc.changeSpeed(mouseAccelerationX, mouseAccelerationY);
         isDiscClicked = false;
     }
     
