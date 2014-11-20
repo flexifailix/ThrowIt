@@ -90,6 +90,9 @@ function PlayingDisc() {
                     this.x = canvasWidth - this.radius;
                     this.changeSpeed(0 , null);
                     background.changeSpeed(mouseAccelerationX, null);
+                } else if (this.x - this.radius <= 0) {
+                    this.x = this.radius;
+                    this.changeSpeed(0, null);
                 }
             }
             
