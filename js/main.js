@@ -7,8 +7,6 @@ var frameRate = 60;
 
 var gravity = 8 / 1000 * frameRate;
 
-var isPlaying = false;
-
 var isDiscClicked = false;
 
 var distance = 0;
@@ -81,8 +79,13 @@ function PlayingDisc() {
             if (this.isLanded()) {
                 this.changePosition(null, canvasHeight - this.radius);
                 
-                if (this.speedY >= 2) {
-                    this.changeSpeed(null, -0.5 * Math.round(this.speedY));
+                if (this.speedY >= 1) {
+                    this.changeSpeed(null, this.speedY * -50 / 100);
+                    if (this.x + this.radius >= canvasWidth) {
+                        background.changeSpeed(background.speedX * 80 / 100, null);
+                    } else {
+                        this.changeSpeed(this.speedX * 80 / 100,null);
+                    }
                 } else {
                     if (this.x > (canvasWidth / 2)) {
                         this.changeSpeed(-8,0);
@@ -98,12 +101,12 @@ function PlayingDisc() {
                     }
                 }      
             } else {
-                this.changeSpeed(this.speedX * 0.98, this.speedY + gravity);
+                this.changeSpeed(this.speedX * 99 / 100, this.speedY + gravity);
                 
-                if (this.x + this.radius >= canvasWidth) {
+                if (this.x + this.radius > canvasWidth) {
                     this.changePosition(canvasWidth - this.radius, null);
+                    background.changeSpeed(this.speedX, null);
                     this.changeSpeed(0 , null);
-                    background.changeSpeed(mouseAccelerationX, null);
                 } else if (this.x - this.radius <= 0) {
                     this.changePosition(this.radius, null);
                     this.changeSpeed(0, null);
@@ -173,13 +176,12 @@ function init()
     canvasElement.addEventListener("mousedown", mouseDownListener, false);
     canvasElement.addEventListener("mouseup",mouseUpListener, false);
     canvasElement.addEventListener("mosueout", mouseOutListener, false);
+    
+    loop();
 };
 
 function loop()
 {
-    if (!isPlaying) {
-        return;
-    }
     context.clearRect(0,0,canvasWidth,canvasHeight);
     
     background.draw();
@@ -215,13 +217,7 @@ function mouseMoveListener(e)
 function keyDownListener(event)
 {
     if (event.keyCode === 32) {
-        if (isPlaying) {
-            isPlaying = false
-        } else {
-            isPlaying = true;
-            resetGame();
-            loop();
-        }
+        resetGame();
     }
 };
 
@@ -243,8 +239,13 @@ function checkDiscClick(event)
 
 function resetGame()
 {
-    resetAccData();   
-    playingDisc.changePosition(20,20);
+    resetAccData();
+    
+    background = new Background();
+    background.init(0,0,0,0);
+    
+    playingDisc = new PlayingDisc();
+    playingDisc.init(20,20,12,'red',0,0);
 }
 
 function resetAccData()
