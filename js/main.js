@@ -11,6 +11,9 @@ var isPlaying = false;
 
 var isDiscClicked = false;
 
+var distance = 0;
+var highScore = 0;
+
 var imageRepo = new function() {
     this.background = new Image();
     
@@ -87,6 +90,11 @@ function PlayingDisc() {
                     } else {
                         this.changeSpeed(0,0);
                         background.changeSpeed(0,0);
+                        
+                        if (distance > highScore) {
+                            highScore = distance;
+                            document.getElementById('highScore').innerHTML = highScore.toFixed(2);
+                        }
                     }
                 }      
             } else {
@@ -100,11 +108,13 @@ function PlayingDisc() {
                     this.changePosition(this.radius, null);
                     this.changeSpeed(0, null);
                 }
+                
+                distance = distance + (this.speedX + background.speedX) / 100;
+                document.getElementById('score').innerHTML = distance.toFixed(2); 
             } 
             
             this.x = this.x + Math.round(this.speedX);
-            this.y = this.y + Math.round(this.speedY);  
-            
+            this.y = this.y + Math.round(this.speedY);       
         }
         
         context.beginPath();
@@ -218,6 +228,7 @@ function keyDownListener(event)
 function mouseDownListener(event)
 {
     resetAccData();
+    distance = 0;
     checkDiscClick(event);
 };
 
