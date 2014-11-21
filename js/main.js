@@ -5,7 +5,7 @@ var canvasWidth;
 
 var frameRate = 60;
 
-var gravity = 10 / 1000 * 60;
+var gravity = 8 / 1000 * frameRate;
 
 var isPlaying = false;
 
@@ -76,30 +76,35 @@ function PlayingDisc() {
             playingDisc.changeSpeed(0,0);
         } else {
             if (this.isLanded()) {
-                this.y = canvasHeight - this.radius;
-            
-                if (this.x > (canvasWidth / 2)) {
-                    this.changeSpeed(-2,0);
-                    background.changeSpeed(2,0);
+                this.changePosition(null, canvasHeight - this.radius);
+                
+                if (this.speedY >= 2) {
+                    this.changeSpeed(null, -0.5 * Math.round(this.speedY));
                 } else {
-                    this.changeSpeed(0,0);
-                    background.changeSpeed(0,0);
-                }            
+                    if (this.x > (canvasWidth / 2)) {
+                        this.changeSpeed(-8,0);
+                        background.changeSpeed(8,0);
+                    } else {
+                        this.changeSpeed(0,0);
+                        background.changeSpeed(0,0);
+                    }
+                }      
             } else {
+                this.changeSpeed(this.speedX * 0.98, this.speedY + gravity);
+                
                 if (this.x + this.radius >= canvasWidth) {
-                    this.x = canvasWidth - this.radius;
+                    this.changePosition(canvasWidth - this.radius, null);
                     this.changeSpeed(0 , null);
                     background.changeSpeed(mouseAccelerationX, null);
                 } else if (this.x - this.radius <= 0) {
-                    this.x = this.radius;
+                    this.changePosition(this.radius, null);
                     this.changeSpeed(0, null);
                 }
-            }
+            } 
             
-            this.speedY = this.speedY + Math.round(gravity);
-                        
-            this.x = this.x + this.speedX;
-            this.y = this.y + this.speedY;     
+            this.x = this.x + Math.round(this.speedX);
+            this.y = this.y + Math.round(this.speedY);  
+            
         }
         
         context.beginPath();
@@ -115,10 +120,6 @@ function PlayingDisc() {
         if (posY === null)
             posY = this.y;
         
-        console.log("checking disccollision");
-        console.log("Object1 x: " + posX + " y: " + posY);
-        console.log("Object2 x: " + this.x + " y: " + this.y);
-        
         if (posX <= (this.x + this.radius) && posX >= (this.x - this.radius)
            && posY <= (this.y + this.radius) && posY >= (this.y - this.radius)) {
             return true;   
@@ -127,7 +128,7 @@ function PlayingDisc() {
     }
     
     this.isLanded = function() {
-        if (this.y + this.radius > canvasHeight) {
+        if (this.y + this.radius >= canvasHeight) {
             return true;
         } else {
             return false;   
@@ -189,8 +190,8 @@ function mouseMoveListener(e)
             var diffPosX = mousePosX - mouseOldPosX;
             var diffPosY = mousePosY - mouseOldPosY;
 
-            mouseAccelerationX = Math.round((diffPosX / diffTimeStamp) * 1000 / frameRate);
-            mouseAccelerationY = Math.round((diffPosY / diffTimeStamp) * 1000 / frameRate);
+            mouseAccelerationX = (diffPosX / diffTimeStamp) * 1000 / frameRate;
+            mouseAccelerationY = (diffPosY / diffTimeStamp) * 1000 / frameRate;
         }
         
         mouseOldTimeStamp = mouseTimeStamp;
