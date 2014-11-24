@@ -192,17 +192,45 @@ function handleMovement() {
     speedY = speedY + gravity;
 
     playingDisc.changeSpeed(speedX, speedY);
+    background.changeSpeed(0, 0);
 
     if (!isThrown) {
         return;
     }
 
-    distance = distance + speedX;
+    // top space scrolllock
+    if (actualHeight >= (canvasHeight * 70 / 100)) {
+        playingDisc.changePosition(null, (canvasHeight * 30 / 100));
+        playingDisc.changeSpeed(null, 0);
+        background.changeSpeed(null, speedY);
+    }
+
+    // right space scrolllock
+    if (playingDisc.x >= (canvasWidth * 70 / 100)) {
+        playingDisc.changePosition((canvasWidth * 70 / 100), null);
+        playingDisc.changeSpeed(0, null);
+        background.changeSpeed(speedX, null);
+    }
+
+
+
+    // Score and Distance
+    if (speedX > 0) {
+        distance = distance + speedX;
+    }
+
     var newActualHeight = actualHeight + Math.round(-1 * speedY);
     if (newActualHeight < 0) {
         newActualHeight = 0;
     }
     actualHeight = newActualHeight;
+
+    if (actualHeight == 0 && speedX == 0) {
+        if (distance > highScore) {
+            highScore = distance;
+        }
+        // ENDE
+    }
 }
 
 function loop() {
@@ -244,6 +272,7 @@ function mouseMoveListener(e) {
 function keyDownListener(event) {};
 
 function mouseDownListener(event) {
+    isThrown = false;
     checkDiscClick(event);
 };
 
