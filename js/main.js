@@ -1,104 +1,109 @@
-var context;
+var context = null;
 
-var canvasHeight;
-var canvasWidth;
+var canvasHeight = null;
+var canvasWidth = null;
 
 var frameRate = 60;
 
 var gravity = 8 / 1000 * frameRate;
 
-var speedX;
-var speedY;
+var speedX = 0;
+var speedY = 0;
 
-var isDiscClicked = false;
-
-var height = 0;
+var actualHeight = 0;
 var maxHeight = 0;
 
 var distance = 0;
 var highScore = 0;
 
-var mouseOldPosX;
-var mouseOldPosY;
+var isThrown = false;
+var isDraged = false;
 
-var imageRepo = new function() {
+var mouseOldPosX = null;
+var mouseOldPosY = null;
+
+var mouseAccSpeedX = 0;
+var mouseAccSpeedY = 0;
+
+var imageRepo = new function () {
     this.background = new Image();
-    
+
     this.background.src = "img/bg.png";
 }
 var background;
 
-function Drawable() {    
-    this.init = function(x,y,speedX,speedY) {
+function Drawable() {
+    this.init = function (x, y, speedX, speedY) {
         this.x = x;
         this.y = y;
         this.speedX = speedX;
         this.speedY = speedY;
     }
-    
-    this.changePosition = function(x,y) {
+
+    this.changePosition = function (x, y) {
         if (x != null)
             this.x = x;
         if (y != null)
             this.y = y;
     }
-    
-    this.changeSpeed = function(speedX, speedY) {
+
+    this.changeSpeed = function (speedX, speedY) {
         if (speedX != null)
             this.speedX = speedX;
         if (speedY != null)
             this.speedY = speedY;
     }
-    
-    this.draw = function() {
-    };
-    
-    this.isCollision = function() {
-    };
+
+    this.draw = function () {};
+
+    this.isCollision = function () {};
 }
 
-function Background() {    
-    this.draw = function() {
+function Background() {
+    this.draw = function () {
+        var oldX = this.x;
+        var oldY = this.y;
+
         this.x = this.x + (-1 * this.speedX);
         this.y = this.y + (-1 * this.speedY);
-        
+
         // mid
         context.drawImage(imageRepo.background, this.x, this.y);
-        
+
         // right
         context.drawImage(imageRepo.background, this.x + canvasWidth, this.y);
-        
+
         // top
         context.drawImage(imageRepo.background, this.x, this.y - canvasHeight);
-        
+
         // top right
         context.drawImage(imageRepo.background, this.x + canvasWidth, this.y - canvasHeight);
-        
+
         // bottom
         context.drawImage(imageRepo.background, this.x, this.y + canvasHeight);
-        
+
         // bottom right
         context.drawImage(imageRepo.background, this.x + canvasWidth, this.y + canvasHeight);
-        
+
         // left
         context.drawImage(imageRepo.background, this.x - canvasWidth, this.y);
-        
+
         // bottom left
         context.drawImage(imageRepo.background, this.x - canvasWidth, this.y + canvasHeight);
-        
+
         if (this.x + canvasWidth <= 0) {
-            this.x = 0   
+            this.x = 0
         }
-        
+
         if ((this.y - canvasHeight >= 0) || (this.y <= 0 - canvasHeight)) {
-            this.y = 0;   
+            this.y = 0;
         }
     }
 }
 Background.prototype = new Drawable();
 
 function PlayingDisc() {
-    this.init = function(x,y,radius,color,speedX,speedY) {
+    this.init = function (x, y, radius, color, speedX, speedY) {
         this.x = x;
         this.y = y;
         this.radius = radius;
@@ -106,248 +111,169 @@ function PlayingDisc() {
         this.speedX = speedX;
         this.speedY = speedY;
     }
-    
-    this.draw = function() {
-        if (isDiscClicked) {
-            background.changeSpeed(0,0);
-            playingDisc.changeSpeed(0,0);
-        } else {   
-            speedX = speedX * 99 / 100;
-            speedY = speedY + gravity;
-                
-            this.changeSpeed(speedX, speedY);
-                
-            // left
-            if (speedX < 0) {
-                // left ege
-                if (this.x - this.radius <= 0) {
-                    speedX = 0;
-                    this.changePosition(this.radius, null);
-                    this.changeSpeed(speedX, null);
-                }   
-            }
-            
-            // right
-            if (speedX > 0) {
-                // right edge
-                if (this.x + this.radius >= canvasWidth) {
-                    this.changePosition(canvasWidth - this.radius, null);
-                
-                    this.changeSpeed(0 , null);
-                    background.changeSpeed(speedX, null);        
-                } 
-            }
-            
-            // up
-            if (speedY < 0) {
-                // opper edge
-                if (this.y - this.radius <= 0) {
-                    this.changePosition(null, this.radius);
-                
-                    this.changeSpeed(null, 0);
-                    background.changeSpeed(null, speedY);
-                } 
-            }
-            
-            // down
-            if (speedY > 0) {                
-                 background.changeSpeed(null, speedY);
-                
-                // bottom edge
-                if (this.y + this.radius >= canvasHeight) {   
-                    
-                    this.changePosition(null, canvasHeight - this.radius);
-                    this.changeSpeed(null, 0);
-                    
-                    if (speedY >= 2) {
-                        speedY = speedY * -50 / 100;
-                        this.changeSpeed(null, speedY);
-                        
-                        speedX = speedX * 80 / 100;
-                        if (this.x + this.radius >= canvasWidth) {
-                            background.changeSpeed(speedX, null);
-                        } else {
-                            this.changeSpeed(speedX, null);
-                        }
-                    } else {
-                        if (this.x > (canvasWidth / 2)) {
-                            speedX = -8;
-                            speedY = 0;
-                            this.changeSpeed(speedX,speedY);
-                            background.changeSpeed(speedX,speedY);
-                        } else {
-                            speedX = 0;
-                            speedY = 0;
-                            this.changeSpeed(0,0);
-                            background.changeSpeed(0,0);
-                    
-                            if (distance > highScore) {
-                                highScore = distance;
-                                document.getElementById('highScore').innerHTML = highScore.toFixed(2);
-                                document.getElementById('maxHeight').innerHTML = maxHeight;
-                            }
-                        }
-                    } 
-                }
-            }
-            
-            
-            distance = distance + speedX / 100;
-            
-            height = height + (-1 * speedY);
-            if (height > maxHeight) {
-                maxHeight = height;   
-            }
-            
-            document.getElementById('height').innerHTML = height;
-            document.getElementById('score').innerHTML = distance.toFixed(2); 
-            
-            this.x = this.x + Math.round(this.speedX);
-            this.y = this.y + Math.round(this.speedY); 
-        }    
-        
+
+    this.draw = function () {
+        if (!isDraged) {
+            this.x = this.x + this.speedX;
+            this.y = this.y + this.speedY;
+        }
+
+        // left
+        if (this.x < (0 + this.radius)) {
+            this.changePosition(this.radius, null);
+        }
+
+        // right
+        if (this.x > (canvasWidth - this.radius)) {
+            this.changePosition((canvasWidth - this.radius), null);
+        }
+
+        // top
+        if (this.y < (0 + this.radius)) {
+            this.changePosition(null, this.radius);
+        }
+
+        // bottom
+        if (this.y > (canvasHeight - this.radius)) {
+            this.changePosition(null, canvasHeight - this.radius);
+        }
+
         context.beginPath();
         context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, false);
         context.fillStyle = this.color;
-        context.fill(); 
+        context.fill();
     }
-    
-    this.isCollision = function(posX, posY) {
-        if (posX === null)
+
+    this.isCollision = function (posX, posY) {
+        if (posX === null) {
             posX = this.x;
-        
-        if (posY === null)
+        }
+
+        if (posY === null) {
             posY = this.y;
-        
-        if (posX <= (this.x + this.radius) && posX >= (this.x - this.radius)
-           && posY <= (this.y + this.radius) && posY >= (this.y - this.radius)) {
-            return true;   
+        }
+
+        if (posX <= (this.x + this.radius) && posX >= (this.x - this.radius) && posY <= (this.y + this.radius) && posY >= (this.y - this.radius)) {
+            return true;
         }
         return false;
-    }
-    
-    this.isLanded = function() {
-        if (this.y + this.radius >= canvasHeight) {
-            return true;
-        } else {
-            return false;   
-        }
     }
 }
 PlayingDisc.prototype = new Drawable();
 
 init();
-function init()
-{
+
+function init() {
     var canvasElement = document.getElementById('gameStage');
     context = canvasElement.getContext('2d');
-    
+
     canvasWidth = parseInt(canvasElement.width);
     canvasHeight = parseInt(canvasElement.height);
-    
+
     background = new Background();
-    background.init(0,0,0,0);
-    
+    background.init(0, 0, 0, 0);
+
     playingDisc = new PlayingDisc();
-    playingDisc.init(20,20,12,'red',0,0);
-    
+    playingDisc.init(50, 50, 10, 'red', 0, 0);
+    actualHeight = canvasHeight - 50 - playingDisc.radius;
+
     document.addEventListener("keydown", keyDownListener, false);
     canvasElement.addEventListener("mousemove", mouseMoveListener, false);
     canvasElement.addEventListener("mousedown", mouseDownListener, false);
-    canvasElement.addEventListener("mouseup",mouseUpListener, false);
+    canvasElement.addEventListener("mouseup", mouseUpListener, false);
     canvasElement.addEventListener("mosueout", mouseOutListener, false);
-    
+
     loop();
 };
 
-function loop()
-{
-    context.clearRect(0,0,canvasWidth,canvasHeight);
-    
+function handleMovement() {
+    // standard speedreduction
+    speedX = speedX * 99 / 100;
+    speedY = speedY + gravity;
+
+    playingDisc.changeSpeed(speedX, speedY);
+
+    if (!isThrown) {
+        return;
+    }
+
+    distance = distance + speedX;
+    var newActualHeight = actualHeight + Math.round(-1 * speedY);
+    if (newActualHeight < 0) {
+        newActualHeight = 0;
+    }
+    actualHeight = newActualHeight;
+}
+
+function loop() {
+    context.clearRect(0, 0, canvasWidth, canvasHeight);
+
+    handleMovement();
     background.draw();
     playingDisc.draw();
-    
+
+    document.getElementById('height').innerHTML = actualHeight.toFixed(2);
+    document.getElementById('score').innerHTML = distance.toFixed(2);
+
     window.setTimeout(loop, 1000 / frameRate)
 };
 
-function mouseMoveListener(e)
-{
+function mouseMoveListener(e) {
     var mouseTimeStamp = new Date().getTime();
     var mousePosX = e.pageX - document.getElementById('gameStage').offsetLeft;
     var mousePosY = e.pageY - document.getElementById('gameStage').offsetTop;
-    
-    if (isDiscClicked) {
+
+    if (isDraged) {
         if (mouseOldPosX != null && mouseOldPosY != null) {
             var diffTimeStamp = mouseTimeStamp - mouseOldTimeStamp;
             var diffPosX = mousePosX - mouseOldPosX;
             var diffPosY = mousePosY - mouseOldPosY;
 
-            speedX = (diffPosX / diffTimeStamp) * 1000 / frameRate;
-            speedY = (diffPosY / diffTimeStamp) * 1000 / frameRate;
+            mouseAccSpeedX = (diffPosX / diffTimeStamp) * 1000 / frameRate;
+            mouseAccSpeedY = (diffPosY / diffTimeStamp) * 1000 / frameRate;
         }
-        
+
         mouseOldTimeStamp = mouseTimeStamp;
         mouseOldPosX = mousePosX;
         mouseOldPosY = mousePosY;
-        
+
         playingDisc.changePosition(mousePosX, mousePosY);
     }
 };
 
-function keyDownListener(event)
-{
-    if (event.keyCode === 32) {
-        resetGame();
-    }
-};
+function keyDownListener(event) {};
 
-function mouseDownListener(event)
-{
-    resetAccData();
-    distance = 0;
-    height = 0;
-    maxHeight = 0;
+function mouseDownListener(event) {
     checkDiscClick(event);
 };
 
-function checkDiscClick(event)
-{
+function checkDiscClick(event) {
     if (playingDisc.isCollision(event.pageX - document.getElementById('gameStage').offsetLeft, event.pageY - document.getElementById('gameStage').offsetTop)) {
-        isDiscClicked = true;    
+        isDraged = true;
     } else {
-        isDiscClicked = false;   
+        isDraged = false;
     }
 }
 
-function resetGame()
-{
-    resetAccData();
-    
-    background = new Background();
-    background.init(0,0,0,0);
-    
-    playingDisc = new PlayingDisc();
-    playingDisc.init(20,20,12,'red',0,0);
-}
+function mouseUpListener(event) {
+    if (isDraged) {
+        speedX = mouseAccSpeedX;
+        speedY = mouseAccSpeedY;
+        isThrown = true;
 
-function resetAccData()
-{
-    mouseOldPosX = null;
-    mouseOldPosY = null;
-    mouseOldTimeStamp = null;
-    speedX = 0;
-    speedY = 0;
-}
+        distance = 0;
+        actualHeight = canvasHeight - (event.pageY - document.getElementById('gameStage').offsetTop) - playingDisc.radius;
+        if (actualHeight < 0) {
+            actualHeight = 0;
+        }
 
-function mouseUpListener(event)
-{
-    if (isDiscClicked) {
-        playingDisc.changeSpeed(speedX, speedY);
-        isDiscClicked = false;
+        if (actualHeight > canvasHeight) {
+            actualHeight = canvasHeight;
+        }
     }
+    isDraged = false;
 };
 
-function mouseOutListener(event)
-{
-    isDiscClicked = false;
+function mouseOutListener(event) {
+    isDraged = false;
 };
