@@ -67,11 +67,11 @@ function Background() {
         this.x = this.x + (-1 * this.speedX);
         this.y = this.y + (-1 * this.speedY);
 
-        // mid
-        context.drawImage(imageRepo.background, this.x, this.y);
-
         // right
         context.drawImage(imageRepo.background, this.x + canvasWidth, this.y);
+
+        // mid
+        context.drawImage(imageRepo.background, this.x, this.y);
 
         // top
         context.drawImage(imageRepo.background, this.x, this.y - canvasHeight);
@@ -188,7 +188,7 @@ function init() {
 
 function handleMovement() {
     // standard speedreduction
-    speedX = speedX * 99 / 100;
+    speedX = speedX * 998 / 1000;
     speedY = speedY + gravity;
 
     playingDisc.changeSpeed(speedX, speedY);
@@ -196,6 +196,21 @@ function handleMovement() {
 
     if (!isThrown) {
         return;
+    }
+
+    if (playingDisc.y >= (canvasHeight - playingDisc.radius)) {
+        if (speedY > 2) {
+            speedY = speedY * -50 / 100;
+        } else {
+            speedY = 0;
+        }
+
+        if (speedX > 2) {
+            speedX = speedX * 90 / 100;
+        } else {
+            speedX = 0;
+        }
+        playingDisc.changeSpeed(speedX, speedY);
     }
 
     // top space scrolllock
@@ -212,8 +227,6 @@ function handleMovement() {
         background.changeSpeed(speedX, null);
     }
 
-
-
     // Score and Distance
     if (speedX > 0) {
         distance = distance + speedX;
@@ -225,11 +238,18 @@ function handleMovement() {
     }
     actualHeight = newActualHeight;
 
-    if (actualHeight == 0 && speedX == 0) {
+    if (actualHeight == 0 && speedX == 0 && speedY == 0) {
         if (distance > highScore) {
             highScore = distance;
+            document.getElementById('highScore').innerHTML = highScore.toFixed(1);
         }
-        // ENDE
+
+        if (playingDisc.x > (canvasWidth / 2)) {
+            playingDisc.changeSpeed(-8, null);
+        } else {
+            isThrown = false;
+            playingDisc.changeSpeed(0, null);
+        }
     }
 }
 
@@ -240,8 +260,8 @@ function loop() {
     background.draw();
     playingDisc.draw();
 
-    document.getElementById('height').innerHTML = actualHeight.toFixed(2);
-    document.getElementById('score').innerHTML = distance.toFixed(2);
+    document.getElementById('height').innerHTML = actualHeight.toFixed(1);
+    document.getElementById('score').innerHTML = distance.toFixed(1);
 
     window.setTimeout(loop, 1000 / frameRate)
 };
@@ -272,7 +292,10 @@ function mouseMoveListener(e) {
 function keyDownListener(event) {};
 
 function mouseDownListener(event) {
-    isThrown = false;
+    if (isThrown) {
+        return;
+    }
+
     checkDiscClick(event);
 };
 
@@ -285,6 +308,10 @@ function checkDiscClick(event) {
 }
 
 function mouseUpListener(event) {
+    if (isThrown) {
+        return;
+    }
+
     if (isDraged) {
         speedX = mouseAccSpeedX;
         speedY = mouseAccSpeedY;
