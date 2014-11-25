@@ -25,6 +25,8 @@ var mouseOldPosY = null;
 var mouseAccSpeedX = 0;
 var mouseAccSpeedY = 0;
 
+var powerUps = new Array();
+
 var imageRepo = new function () {
     this.background = new Image();
 
@@ -161,6 +163,19 @@ function PlayingDisc() {
 }
 PlayingDisc.prototype = new Drawable();
 
+function PowerUp() {
+    this.draw = function () {
+        this.x = this.x + this.speedX;
+        this.y = this.y + this.speedY;
+
+        context.beginPath();
+        context.arc(this.x, this.y, 10, 0, 2 * Math.PI, false);
+        context.fillStyle = 'red';
+        context.fill();
+    }
+}
+PowerUp.prototype = new Drawable();
+
 init();
 
 function init() {
@@ -253,12 +268,34 @@ function handleMovement() {
     }
 }
 
+function handlePowerUps() {
+    if (powerUps.length < 4) {
+        if (Math.floor((Math.random() * 1000) < 2)) {
+            var powerUp = new PowerUp();
+            powerUp.init(canvasWidth, Math.floor((Math.random() * 400)), -3, 0);
+            powerUps.push(powerUp);
+        }
+    }
+
+    for (var each of powerUps) {
+        if (each.x <= 0) {
+            var index = powerUps.indexOf(each);
+            powerUps.splice(index, 1);
+        }
+    }
+}
+
 function loop() {
     context.clearRect(0, 0, canvasWidth, canvasHeight);
 
     handleMovement();
     background.draw();
     playingDisc.draw();
+
+    handlePowerUps();
+    for (var each of powerUps) {
+        each.draw();
+    }
 
     document.getElementById('height').innerHTML = actualHeight.toFixed(1);
     document.getElementById('score').innerHTML = distance.toFixed(1);
