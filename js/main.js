@@ -5,7 +5,9 @@ var canvasWidth = null;
 
 var frameRate = 60;
 
-var gravity = 8 / 1000 * frameRate;
+var gravity = 6 / 1000 * frameRate;
+var backgroundSpeedMultiplier = 25;
+var powerUpSpeedMultiplier = 40;
 
 var speedX = 0;
 var speedY = 0;
@@ -26,13 +28,16 @@ var mouseAccSpeedX = 0;
 var mouseAccSpeedY = 0;
 
 var powerUps = new Array();
+var background;
+var playingDisc;
 
 var imageRepo = new function () {
     this.background = new Image();
-
     this.background.src = "img/bg.png";
+
+    this.powerUp = new Image();
+    this.powerUp.src = "img/tornado1.png";
 }
-var background;
 
 function Drawable() {
     this.init = function (x, y, speedX, speedY) {
@@ -66,8 +71,8 @@ function Background() {
         var oldX = this.x;
         var oldY = this.y;
 
-        this.x = this.x + (-1 * this.speedX);
-        this.y = this.y + (-1 * this.speedY);
+        this.x = this.x + (-1 * this.speedX * backgroundSpeedMultiplier / 100);
+        this.y = this.y + (-1 * this.speedY * backgroundSpeedMultiplier / 100);
 
         // right
         context.drawImage(imageRepo.background, this.x + canvasWidth, this.y);
@@ -168,10 +173,7 @@ function PowerUp() {
         this.x = this.x + this.speedX;
         this.y = this.y + this.speedY;
 
-        context.beginPath();
-        context.arc(this.x, this.y, 10, 0, 2 * Math.PI, false);
-        context.fillStyle = 'red';
-        context.fill();
+        context.drawImage(imageRepo.powerUp, this.x, this.y);
     }
 }
 PowerUp.prototype = new Drawable();
@@ -254,6 +256,7 @@ function handleMovement() {
     actualHeight = newActualHeight;
 
     if (actualHeight == 0 && speedX == 0 && speedY == 0) {
+        powerUps = [];
         if (distance > highScore) {
             highScore = distance;
             document.getElementById('highScore').innerHTML = highScore.toFixed(1);
@@ -269,18 +272,52 @@ function handleMovement() {
 }
 
 function handlePowerUps() {
-    if (powerUps.length < 4) {
-        if (Math.floor((Math.random() * 1000) < 2)) {
-            var powerUp = new PowerUp();
-            powerUp.init(canvasWidth, Math.floor((Math.random() * 400)), -3, 0);
-            powerUps.push(powerUp);
-        }
+    if (!isThrown) {
+        powerUps = [];
+        return;
     }
 
-    for (var each of powerUps) {
+    if (Math.floor((Math.random() * 100) < 6)) {
+        var powerUp = new PowerUp();
+
+        var spawnX;
+        var spawnY = Math.floor((Math.random() * canvasHeight * 3) - canvasHeight);
+        if (spawnY >= 0 && spawnY <= canvasHeight) {
+            spawnX = Math.floor((Math.random() * canvasWidth) + canvasWidth);
+        } else {
+            spawnX = Math.floor((Math.random() * canvasWidth * 2));
+        }
+        powerUp.init(spawnX, spawnY, 0, 0);
+
+        powerUps.push(powerUp);
+    }
+
+    for (var i = 0; i < powerUps.length; i++) {
+        var each = powerUps[i];
         if (each.x <= 0) {
             var index = powerUps.indexOf(each);
             powerUps.splice(index, 1);
+        } else {
+            each.changeSpeed(-1 * background.speedX * powerUpSpeedMultiplier / 100 - 1, -1 * background.speedY * powerUpSpeedMultiplier / 100);
+        }
+    }
+}
+
+function checkCollisions() {
+    if (!isThrown) {
+        return;
+    }
+
+    for (var i = 0; i < powerUps.length; i++) {
+        var each = powerUps[i];
+
+        if (playingDisc.isCollision(each.x, each.y)) {
+            if (speedY < 0) {
+                speedY = -50;
+            } else {
+                speedY = speedY - 50;
+            }
+            speedX = speedX + 20;
         }
     }
 }
@@ -296,6 +333,7 @@ function loop() {
     for (var each of powerUps) {
         each.draw();
     }
+    checkCollisions();
 
     document.getElementById('height').innerHTML = actualHeight.toFixed(1);
     document.getElementById('score').innerHTML = distance.toFixed(1);
